@@ -1,0 +1,46 @@
+services:
+  wordpress:
+    build: ${PWD}/docker/wordpress
+    image: wordpress
+    container_name: wordpress
+    environment:
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db-passwd
+    env_file: .env
+    secrets:
+      - db-passwd
+    volumes:
+      - wordpress_data:/var/www/html
+    ports:
+      - 8080:80
+    networks: 
+      - cloud-1
+    restart: unless-stopped
+  mysql:
+    build: ${PWD}/docker/mysql
+    image: mysql
+    container_name: mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_PASSWORD_FILE: /run/secrets/db-passwd
+    env_file: .env
+    secrets:
+      - db-passwd
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - cloud-1
+    restart: unless-stopped
+
+networks:
+  cloud-1:
+    name: cloud-1
+
+volumes:
+  wordpress_data:
+    name: wordpress_data
+  db_data:
+    name: db_data
+
+secrets:
+  db-passwd:
+    file: ${PWD}/docker/secrets/db-passwd.txt
