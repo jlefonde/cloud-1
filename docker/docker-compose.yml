@@ -1,8 +1,32 @@
 services:
+  mysql:
+    build: ${PWD}/docker/mysql
+    image: mysql
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db-root-passwd
+      MYSQL_PASSWORD_FILE: /run/secrets/db-passwd
+    env_file: .env
+    secrets:
+      - db-root-passwd
+      - db-passwd
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - cloud-1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
   wordpress:
     build: ${PWD}/docker/wordpress
     image: wordpress
     container_name: wordpress
+    depends_on:
+      mysql: 
+        condition: service_healthy
     environment:
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db-passwd
     env_file: .env
@@ -15,18 +39,16 @@ services:
     networks: 
       - cloud-1
     restart: unless-stopped
-  mysql:
-    build: ${PWD}/docker/mysql
-    image: mysql
-    container_name: mysql
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
-      MYSQL_PASSWORD_FILE: /run/secrets/db-passwd
+  phpmyadmin:
+    build: ${PWD}/docker/phpmyadmin
+    image: phpmyadmin
+    container_name: phpmyadmin
+    depends_on:
+      mysql: 
+        condition: service_healthy
     env_file: .env
-    secrets:
-      - db-passwd
-    volumes:
-      - db_data:/var/lib/mysql
+    ports:
+      - 8081:80
     networks:
       - cloud-1
     restart: unless-stopped
@@ -42,5 +64,7 @@ volumes:
     name: db_data
 
 secrets:
+  db-root-passwd:
+    file: ${PWD}/docker/secrets/db-root-passwd.txt
   db-passwd:
     file: ${PWD}/docker/secrets/db-passwd.txt
