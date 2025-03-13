@@ -25,8 +25,10 @@ services:
     env_file: .env
     volumes:
       - ./nginx/templates:/etc/nginx/templates
+      - ./nginx/ssl:/etc/nginx/ssl
     ports:
-      - 8080:80
+      - 443:443
+      - 80:80
     networks: 
       - cloud-1
     restart: unless-stopped
@@ -56,7 +58,7 @@ services:
         condition: service_healthy
     env_file: .env
     ports:
-      - 8081:80
+      - 8082:80
     networks:
       - cloud-1
     restart: unless-stopped
