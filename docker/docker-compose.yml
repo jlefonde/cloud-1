@@ -19,12 +19,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    env_file: .env
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates
+    ports:
+      - 8080:80
+    networks: 
+      - cloud-1
+    restart: unless-stopped
   wordpress:
-    image: wordpress:6.7.2-php8.3-apache
+    image: wordpress:php8.3-fpm-alpine
     container_name: wordpress
     depends_on:
       mysql: 
         condition: service_healthy
+      nginx:
+        condition: service_started
     environment:
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db-passwd
     env_file: .env
@@ -32,13 +45,11 @@ services:
       - db-passwd
     volumes:
       - wordpress_data:/var/www/html
-    ports:
-      - 8080:80
     networks: 
       - cloud-1
     restart: unless-stopped
   phpmyadmin:
-    image: phpmyadmin
+    image: phpmyadmin:apache
     container_name: phpmyadmin
     depends_on:
       mysql: 
