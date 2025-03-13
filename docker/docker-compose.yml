@@ -1,7 +1,6 @@
 services:
   mysql:
-    build: ${PWD}/docker/mysql
-    image: mysql
+    image: mysql:8.0-debian
     container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db-root-passwd
@@ -21,8 +20,7 @@ services:
       timeout: 5s
       retries: 3
   wordpress:
-    build: ${PWD}/docker/wordpress
-    image: wordpress
+    image: wordpress:6.7.2-php8.3-apache
     container_name: wordpress
     depends_on:
       mysql: 
@@ -40,7 +38,6 @@ services:
       - cloud-1
     restart: unless-stopped
   phpmyadmin:
-    build: ${PWD}/docker/phpmyadmin
     image: phpmyadmin
     container_name: phpmyadmin
     depends_on:
