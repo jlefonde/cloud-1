@@ -1,6 +1,4 @@
 .ssh
-.env
 ssl
 *.key
 *.crt
-docker/secrets

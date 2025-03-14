@@ -2,9 +2,11 @@
 - hosts: azure
   become: true
 
+  vars:
+    docker_linux_ubuntu: https://download.docker.com/linux/ubuntu
+
   vars_files:
-    - vars/vars.yml
-    - vars/vault.yml
+    - vault.yml
 
   handlers:
     - name: update_apt_cache
@@ -17,37 +19,36 @@
 
     - name: restart_nginx
       community.docker.docker_compose_v2:
-        project_src: docker
+        project_src: "{{ docker_env.PROJECT_SRC }}"
         services:
           - nginx
         state: restarted
       register: output
       notify: show_output
 
+  pre_tasks:
+      - name: Create project root directory
+        file:
+          path: "{{ docker_env.PROJECT_SRC }}"
+          state: directory
+          mode: '0755'
+
   tasks:
     - name: Install required packages
       apt:
-        name: ca-certificates
+        name:
+          - ca-certificates
         state: present
-        update_cache: yes
 
-    - name: Create directory for Docker keyrings
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
-    - name: Download Docker GPG key
-      get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/docker.asc
-        mode: '0755'
+    - name: Add GPG key
+      apt_key:
+        url: "{{ docker_linux_ubuntu }}/gpg"
+        state: present
 
     - name: Add Docker repository to APT sources
       apt_repository:
-        repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb {{ docker_linux_ubuntu }} {{ ansible_distribution_release }} stable"
         state: present
-      notify: update_apt_cache
 
     - name: Install Docker packages
       apt:
@@ -55,19 +56,22 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
-          - docker-buildx-plugin
           - docker-compose-plugin
         state: present
 
+    - name: Copy Docker compose file
+      copy:
+        src: ./docker/docker-compose.yml
+        dest: "{{ docker_env.PROJECT_SRC }}/docker-compose.yml"
+        mode: '0644'
+
     - name: Ensure Docker Compose services are up
       community.docker.docker_compose_v2:
-        project_src: docker
-      register: output
-      notify: show_output
+        project_src: "{{ docker_env.PROJECT_SRC }}"
+      environment: "{{ docker_env | combine({'TEST': 'value'}) }}"
 
     - name: Copy Nginx config files
       copy:
         src: ./docker/nginx/
-        dest: /etc/nginx/
+        dest: "{{ docker_env.PROJECT_SRC }}/nginx/"
       notify: restart_nginx
-
