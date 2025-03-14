@@ -27,17 +27,16 @@
       notify: show_output
 
   pre_tasks:
-      - name: Create project root directory
-        file:
-          path: "{{ docker_env.PROJECT_SRC }}"
-          state: directory
-          mode: '0755'
+    - name: Create project root directory
+      file:
+        path: "{{ docker_env.PROJECT_SRC }}"
+        state: directory
+        mode: '0755'
 
   tasks:
     - name: Install required packages
       apt:
-        name:
-          - ca-certificates
+        name: ca-certificates
         state: present
 
     - name: Add GPG key
@@ -68,7 +67,7 @@
     - name: Ensure Docker Compose services are up
       community.docker.docker_compose_v2:
         project_src: "{{ docker_env.PROJECT_SRC }}"
-      environment: "{{ docker_env | combine({'TEST': 'value'}) }}"
+      environment: "{{ docker_env }}"
 
     - name: Copy Nginx config files
       copy:

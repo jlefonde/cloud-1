@@ -27,6 +27,7 @@ services:
       NGINX_SSL_KEY_FILE: ${NGINX_SSL_KEY_FILE}
       WORDPRESS_PORT: ${WORDPRESS_PORT}
     volumes:
+      - wordpress_data:/var/www/html
       - ./nginx/templates:/etc/nginx/templates
       - ./nginx/ssl:/etc/nginx/ssl
       - ./nginx/conf.d:/etc/nginx/conf.d
@@ -51,7 +52,7 @@ services:
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
     volumes:
       - wordpress_data:/var/www/html
-    networks: 
+    networks:
       - cloud-1
     restart: unless-stopped
   phpmyadmin:
