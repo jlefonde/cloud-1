@@ -58,6 +58,12 @@
           - docker-compose-plugin
         state: present
 
+    - name: Copy WordPress custom image
+      copy:
+        src: ./docker/wordpress/
+        dest: "{{ docker_env.PROJECT_SRC }}/wordpress/"
+        mode: '0644'
+
     - name: Copy Docker compose file
       copy:
         src: ./docker/docker-compose.yml
